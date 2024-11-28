@@ -1,0 +1,146 @@
+#include "lpc214x.h"
+// Define constants for GPIO pins and control signals
+#define LCD_PORT 0x00FF0000
+#define EN (1 << 31)
+#define RS (1 << 27)
+#define CS1 (1 << 26)
+#define CS2 (1 << 25)
+#define GRST (1 << 30)
+
+#define RW (1 << 24)
+#define LCD_SHIFT 16
+
+// Function to introduce a small delay
+void delay(unsigned int time) {
+int i, j;
+for (i = 0; i < time; i++)
+for (j = 0; j < 10; j++);
+}
+
+// Function to introduce a longer delay
+void ldelay(unsigned int time) {
+int i, j;
+for (i = 0; i < time; i++)
+for (j = 0; j < 5000; j++);
+}
+
+// Function to generate an ENABLE pulse for data latching
+void LCD_strobe(void) {
+IO1SET = EN; // Set the EN (Enable) pin high
+delay(5); // Delay to keep EN high
+IO1CLR = EN; // Clear the EN (Enable) pin to create a pulse
+delay(5); // Delay after the pulse
+}
+
+// Function to send data to the GLCD
+void GLCD_data(unsigned char ch) {
+IO1CLR = LCD_PORT; // Clear the data pins
+IO1SET = ch << LCD_SHIFT; // Set the data pins with the given data
+IO1SET = RS; // Set RS (Register Select) to indicate data
+LCD_strobe(); // Call function to latch the data
+}
+
+// Function to send a command to the GLCD
+void GLCD_cmd(unsigned char ch) {
+IO1CLR = LCD_PORT; // Clear the data pins
+IO1SET = ch << LCD_SHIFT; // Set the data pins with the given command
+IO1CLR = RS; // Clear RS (Register Select) to indicate a command
+LCD_strobe(); // Call function to send the command
+}
+
+// Function to initialize the GLCD
+void GLCD_Init() {
+
+int i;
+PINSEL0 = 0; // Set pins as GPIO
+PINSEL1 = 0;
+PINSEL2 = 0;
+IODIR1 = LCD_PORT | RS | EN | CS1 | CS2 | GRST | RW; // Set pins as output
+IOSET1 = GRST | CS1 | CS2; // Set control pins
+IOCLR1 = RW | RS | EN; // Clear other control pins
+for (i = 0; i < 10; i++)
+GLCD_cmd(0x3F); // Display ON
+GLCD_cmd(0x40); // Set Y address as 0 (range 0-63)
+GLCD_cmd(0xB8); // Set X address as 0 (page address) (range 0-7)
+}
+
+// Function to display data on the GLCD
+void GLCD_disp(unsigned char *temp1) {
+int page, col;
+for (page = 0; page < 8; page++) {
+IO1SET = CS1; // Select chip CS1
+IO1CLR = CS2; // Deselect chip CS2
+GLCD_cmd(0xB8 | page); // Set the page address
+GLCD_cmd(0x40); // Set the column address
+for (col = 0; col < 64; col++) {
+GLCD_data(temp1[(page * 128) + col]); // Send data for CS1
+}
+IO1CLR = CS1; // Deselect chip CS1
+IO1SET = CS2; // Select chip CS2
+GLCD_cmd(0xB8 | page); // Set the page address
+GLCD_cmd(0x40); // Set the column address
+for (col = 64; col < 128; col++) {
+GLCD_data(temp1[(page * 128) + col]); // Send data for CS2
+}
+}
+}
+
+// Main function
+int main() {
+GLCD_Init(); // Initialize the GLCD
+int i, j, l, m;
+
+for (i = 1; i < 7; i++) {
+IO1SET = CS1; // Select chip CS1
+IO1CLR = CS2; // Deselect chip CS2
+}
+// Draw horizontal strips on the display
+
+for (l = 1; l < 3; l++) {
+GLCD_cmd(0xB8 | l);
+for (m = 37; m < 64; m++) {
+GLCD_cmd(0x40 | m);
+GLCD_data(0x00); // Set pixel to 0x00
+}
+}
+
+// Repeat the same process for the other half of the display (CS2)
+for (i = 1; i < 7; i++) {
+IO1SET = CS2; // Select chip CS2
+IO1CLR = CS1; // Deselect chip CS1
+}
+for (l = 1; l < 3; l++) {
+GLCD_cmd(0xB8 | l);
+for (m = 64; m < 90; m++) {
+GLCD_cmd(0x40 | m);
+GLCD_data(0x00); // Set pixel to 0x00
+}
+}
+
+for (i = 1; i < 7; i++) {
+IO1SET = CS1; // Select chip CS1
+IO1CLR = CS2; // Deselect chip CS2
+}
+// Draw horizontal strips on the display
+for (l = 5; l < 7; l++) {
+GLCD_cmd(0xB8 | l);
+for (m = 37; m < 64; m++) {
+GLCD_cmd(0x40 | m);
+GLCD_data(0x00); // Set pixel to 0x00
+}
+}
+
+// Repeat the same process for the other half of the display (CS2)
+for (i = 1; i < 7; i++) {
+IO1SET = CS2; // Select chip CS2
+IO1CLR = CS1; // Deselect chip CS1
+
+}
+for (l = 5; l < 7; l++) {
+GLCD_cmd(0xB8 | l);
+for (m = 64; m < 90; m++) {
+GLCD_cmd(0x40 | m);
+GLCD_data(0x00); // Set pixel to 0x00
+}
+}
+}
