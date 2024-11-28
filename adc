@@ -1,0 +1,46 @@
+#include"LPC214x.h"
+#include"UARTO PROGRAM. C" 
+void adcdelay (unsigned int time)
+{
+unsigned int i，j；
+for (i=0;i<time;i++)
+{
+for(j=0：j<100：j++);
+}
+}
+void ADCInit (void)
+{
+PINSEL1=0x01000000;
+ADOCR=0x00200302;
+}
+int main (void)
+{
+unsigned int adc_data:
+unsigned char adc_ASCII[3], i, number;
+UartOInit ();
+ADCInit () ;
+while (1)
+{
+ADOCR=0x01200302;
+while ((AD0DR1 & 0x80000000)!= 0x80000000);
+UARTO_PutS ("ADC value (hex)=");
+adc_data=(AD0DR1 & 0x0000FFC0) >>6;
+adcdelay (100) ;
+adc_ASCII [2]= (adc_data& 0x0000000F);
+adc_ASCII[1]=(adc_data & 0x000000F0)>>4; 
+adc_ASCII [0] =(adc_data & 0x00000F00) >>8;
+for (i=0;i<3;i++)
+{
+if ( (0<=adc_ASCII [i] && adc_ASCII[i]<=9) )
+{
+number=adc_ASCII [i]+0x30;
+}
+if ((OxA<=adc_ASCII [i] && adc_ASCII [i]<=0xF) )
+{
+number=adc_ASCII[i]+0x37;
+}
+UARTO_PutChar (number) ;
+}
+UARTO_PutS ("\n \r");
+}
+}
