@@ -1,0 +1,41 @@
+#include <lpc214x.h>
+#define o_count 1000
+#define i_count 5000
+
+void delay(){
+int i,j;
+
+for(i=0;i<o_count;i++){
+for(j=0;j<i_count;j++);
+}
+}
+
+void main() {
+
+PINSEL0=0x00FFFFFF;
+
+PINSEL1=0xFFFFFF00;
+
+IODIR0=0X000FF000;
+
+while(1)
+{
+for(int p=0;p<6;p++)
+
+{
+
+IOSET0=0x00003000<<(p+1);
+delay();
+IOCLR0=0x00003000<<(p+1);
+delay();
+
+}
+for(int k=0;k<6;k++)
+{
+IOSET0 = 0x000C0000>>(k+1);
+delay();
+IOCLR0 = 0x000C0000>>(k+1);
+delay();
+}
+}
+}
