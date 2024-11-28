@@ -1,0 +1,93 @@
+#include <lpc214x.h>
+void uart0_init(){
+PINSEL0 |= 0x05; // select TxD0 bit (01) & RxD0 bit (01)
+U0FCR = 0x07; // enable FIFO, clear both TX and RX
+U0LCR = 0x83; // select 8 bit character
+U0DLL = 0x62; // set baud rate 9600
+U0DLM = 0;
+U0LCR = 0x03; // disable DLAB
+
+}
+void uart1_init(){
+PINSEL0 |= 0x00050000; // select TxD0 bit (01) & RxD0 bit (01)
+U1FCR = 0x07; // enable FIFO, clear both TX and RX
+U1LCR = 0x83; // select 8 bit character
+U1DLL = 0x62; // set baud rate 9600
+U1DLM = 0;
+U1LCR = 0x03; // disable DLAB
+}
+unsigned char rxd(){
+unsigned char recev_data=0;
+while(!(U1LSR & 0x01));
+recev_data = U1RBR;
+return recev_data;
+}
+
+int main(){
+uart0_init();
+uart1_init();
+while(1){
+unsigned char msg1[] = "Invalid String";
+unsigned char msg2[] = "latitude: ";
+unsigned char msg3[] = "longitude: ";
+unsigned char lat_str[11];
+unsigned char long_str[12];
+unsigned int a =0;
+unsigned char data = rxd();
+if(data == '$'){
+rxd();
+rxd();
+if(rxd()=='R'){
+for(int i=0; i<14; i++) rxd();
+if(rxd()=='A'){
+rxd();
+
+unsigned int k =0;
+//latitude
+while(!(U0LSR & 0x20));
+while(msg2[k]!='\0'){
+U0THR= msg2[k];
+k++;
+}
+for(int i=0; i<11; i++){
+lat_str[i] = rxd();
+while(!(U0LSR & 0x20));
+U0THR= lat_str[i];
+}
+while(!(U0LSR & 0x20));
+U0THR= '\n';
+U0THR= '\r';
+rxd();
+//longitude
+unsigned int l =0;
+while(!(U0LSR & 0x20));
+while(msg3[l]!='\0'){
+U0THR= msg3[l];
+l++;
+}
+for(int i=0; i<12; i++){
+long_str[i] = rxd();
+while(!(U0LSR & 0x20));
+U0THR= long_str[i];
+}
+while(!(U0LSR & 0x20));
+U0THR= '\n';
+U0THR= '\r';
+
+}
+else{
+while(!(U0LSR & 0x20));
+while(msg1[a]!='\0'){
+U0THR= msg1[a];
+a++; 
+}
+while(!(U0LSR&0x20)); 
+U0THR= '\n'; 
+U0THR= '\r'; 
+return 0; 
+} 
+} 
+} 
+} 
+return0; 
+}
