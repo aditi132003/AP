@@ -1,0 +1,43 @@
+#include<lpc214x.h>
+unsigned char tx_msg[20]="\n Sonam_Aditi \r";
+void delay(unsigned int time)
+{
+unsigned int i,j;
+for(i=0;i<time;i++)
+{
+for(j=0;j<275;j++);
+}
+}
+void string_trx(unsigned char *tx_ptr)
+{
+unsigned char i;
+for(i=0; tx_ptr[i]!='\0';i++)
+{
+while((U0LSR&0x60)==00); // (!U0LSR&0x60)
+U0THR= tx_ptr[i];
+delay(500);
+}
+}
+//void tx_byte(unsigned char msg)
+//{
+// while((U0LSR&0x60)==00);// (!U0LSR&0x60)
+//U0THR= msg;
+//}
+void uart_init(){
+PINSEL0 |=0x05;
+U0LCR= 0x83;
+U0DLL= 0x61;
+U0DLM=0;
+U0LCR =0x03; //disable DLAB
+U0FCR =0x07; //Enable FIFO,clear Rx and Tx FIFO,write 1 character
+
+}
+int main(){
+uart_init();
+while(1)
+{
+//tx_byte('A');
+string_trx(tx_msg);
+delay(10);
+};
+}
